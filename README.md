@@ -1,4 +1,4 @@
-🚀 MacAnonymizer Pro - Advanced MAC Address Manipulation Tool
+🚀 MacAnonymizer V2.0 - Advanced MAC Address Manipulation Tool
 
 <p align="center"> <img src="https://img.shields.io/badge/Version-2.0-brightgreen" alt="Version"> <img src="https://img.shields.io/badge/Python-3.7+-blue" alt="Python"> <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License"> <img src="https://img.shields.io/badge/Author-Cyb0rgBytes-purple" alt="Author"> </p><p align="center"> ⚡ <strong>Revolutionizing network discovery with style, speed, and precision!</strong> ⚡ </p>
 
