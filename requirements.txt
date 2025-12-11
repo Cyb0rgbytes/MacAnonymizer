@@ -1,0 +1,6 @@
+rich
+terminaltexteffects
+speedtest-cli
+netifaces
+colorama
+
