@@ -2,7 +2,7 @@
 """
 Title: MacAnonymizer Pro
 Description: Advanced cross-platform MAC address manipulation tool with visual effects
-Author: SoftAddict (Enhanced)
+Author: Cyb0rgBytes
 Version: 2.0
 Python: 3.8+
 Features: Cross-platform (Linux/Windows/macOS), animations, random MAC generation, vendor lookup, speed testing, rollback system
@@ -15,11 +15,12 @@ import random
 import platform
 import subprocess
 import argparse
+import json
 from datetime import datetime
 from typing import Optional, Tuple, Dict, List
 from enum import Enum
 
-# Third-party imports (install via: pip install rich terminaltexteffects speedtest-cli netifaces)
+# Third-party imports (install via: pip install -r requirements.txt)
 try:
     from rich.console import Console
     from rich.table import Table
@@ -29,13 +30,23 @@ try:
     from rich.live import Live
     from rich.text import Text
     from rich import box
-    import terminaltexteffects as tte
     import netifaces
     import speedtest
     from colorama import init, Fore, Back, Style
     init(autoreset=True)
+    
+    # Try to import terminaltexteffects, but it's optional
+    try:
+        from terminaltexteffects.effects import Decrypt
+        TERMINALTEXTEFFECTS_AVAILABLE = True
+    except ImportError:
+        TERMINALTEXTEFFECTS_AVAILABLE = False
+        print("[Warning] terminaltexteffects not installed. Animations will be limited.")
+        print("Install with: pip install terminaltexteffects")
+        
 except ImportError as e:
-    print(f"Missing dependencies. Install with: pip install rich terminaltexteffects speedtest-cli netifaces colorama")
+    print(f"Missing dependencies. Install with: pip install -r requirements.txt")
+    print(f"Error details: {e}")
     sys.exit(1)
 
 # ============================================================================
@@ -88,6 +99,7 @@ class Animator:
     def __init__(self, console: Console):
         self.console = console
         self.animation_speed = 0.03
+        self.use_advanced_animations = TERMINALTEXTEFFECTS_AVAILABLE
     
     def show_startup_animation(self):
         """Display startup animation sequence"""
@@ -98,16 +110,32 @@ class Animator:
 ╚══════════════════════════════════════════════════════════╝
         """
         
-        # Create a decrypt effect animation
-        effect = tte.Effect("decrypt")
-        animated_title = effect.apply(title)
+        # Use terminaltexteffects if available
+        if self.use_advanced_animations:
+            try:
+                # Create a decrypt effect instance
+                effect = Decrypt(title)
+                
+                # Play the animation
+                with effect.terminal_output() as terminal:
+                    for frame in effect:
+                        terminal.print(frame)
+                self.console.print()
+                return
+            except Exception as e:
+                self.console.print(f"[yellow]Advanced animation failed, using fallback: {e}[/yellow]")
         
-        with self.console.status("[bold cyan]Initializing security protocols...", spinner="dots"):
-            for char in animated_title:
+        # Fallback animation using rich
+        self.console.print("\n" * 2)
+        for i, char in enumerate(title):
+            if i % 3 == 0:
                 self.console.print(char, end="", style="bold green")
-                time.sleep(self.animation_speed)
-        
-        self.console.print()
+            elif i % 3 == 1:
+                self.console.print(char, end="", style="bold cyan")
+            else:
+                self.console.print(char, end="", style="bold blue")
+            time.sleep(0.001)
+        self.console.print("\n" * 2)
     
     def progress_spinner(self, message: str, duration: float = 1.5):
         """Show a spinner with progress"""
@@ -154,6 +182,7 @@ class Animator:
             for frame in frames:
                 self.console.print(f"\r[bold blue]Scanning network interfaces {frame}", end="")
                 time.sleep(0.1)
+        self.console.print()
 
 # ============================================================================
 # MAC ADDRESS VALIDATOR & FORMATTER
@@ -198,21 +227,24 @@ class MacAddress:
     @staticmethod
     def get_vendor(mac: str) -> str:
         """Get vendor from MAC OUI"""
-        normalized = MacAddress.normalize(mac, MacFormat.COLON)
-        oui = normalized[:8]  # First 3 bytes
-        
-        # Try exact match
-        vendor = VENDOR_OUI.get(oui)
-        if vendor:
-            return vendor
-        
-        # Try partial match (first 2 bytes)
-        oui_prefix = normalized[:5]
-        for key, value in VENDOR_OUI.items():
-            if key.startswith(oui_prefix):
-                return value
-        
-        return "Unknown Vendor"
+        try:
+            normalized = MacAddress.normalize(mac, MacFormat.COLON)
+            oui = normalized[:8]  # First 3 bytes
+            
+            # Try exact match
+            vendor = VENDOR_OUI.get(oui)
+            if vendor:
+                return vendor
+            
+            # Try partial match (first 2 bytes)
+            oui_prefix = normalized[:5]
+            for key, value in VENDOR_OUI.items():
+                if key.startswith(oui_prefix):
+                    return value
+            
+            return "Unknown Vendor"
+        except:
+            return "Unknown Vendor"
     
     @staticmethod
     def generate_random(vendor_oui: Optional[str] = None) -> str:
@@ -438,7 +470,6 @@ class NetworkTester:
     
     def __init__(self, console: Console):
         self.console = console
-        self.st = speedtest.Speedtest()
         self.results = {}
     
     def run_test(self, test_type: str = "quick") -> Dict:
@@ -446,6 +477,9 @@ class NetworkTester:
         self.console.print("[bold cyan]Running network performance test...[/bold cyan]")
         
         try:
+            import speedtest
+            st = speedtest.Speedtest()
+            
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
@@ -457,39 +491,42 @@ class NetworkTester:
                 
                 # Get best server
                 task1 = progress.add_task("[yellow]Finding optimal server...", total=100)
-                self.st.get_best_server()
+                st.get_best_server()
                 progress.update(task1, completed=100)
                 
                 if test_type == "full":
                     # Download test
                     task2 = progress.add_task("[green]Testing download speed...", total=100)
-                    download_speed = self.st.download() / 1_000_000  # Convert to Mbps
+                    download_speed = st.download() / 1_000_000  # Convert to Mbps
                     progress.update(task2, completed=100)
                     
                     # Upload test
                     task3 = progress.add_task("[blue]Testing upload speed...", total=100)
-                    upload_speed = self.st.upload() / 1_000_000  # Convert to Mbps
+                    upload_speed = st.upload() / 1_000_000  # Convert to Mbps
                     progress.update(task3, completed=100)
                 else:
                     # Quick test (download only)
                     task2 = progress.add_task("[green]Testing download speed...", total=100)
-                    download_speed = self.st.download() / 1_000_000
+                    download_speed = st.download() / 1_000_000
                     progress.update(task2, completed=100)
                     upload_speed = 0
                 
                 # Ping
-                ping = self.st.results.ping
+                ping = st.results.ping
                 
                 self.results = {
                     'download': f"{download_speed:.2f} Mbps",
                     'upload': f"{upload_speed:.2f} Mbps" if upload_speed else "Not tested",
                     'ping': f"{ping:.2f} ms",
-                    'server': self.st.results.server['name'],
+                    'server': st.results.server['name'],
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 
                 return self.results
                 
+        except ImportError:
+            self.console.print("[bold yellow]speedtest-cli not installed. Install with: pip install speedtest-cli[/bold yellow]")
+            return {}
         except Exception as e:
             self.console.print(f"[bold red]Speed test failed: {e}[/bold red]")
             return {}
@@ -641,10 +678,14 @@ Examples:
         # Determine target MAC
         if args.random:
             # Generate random MAC
-            target_mac = MacAddress.generate_random(args.vendor)
-            vendor = MacAddress.get_vendor(target_mac)
-            self.console.print(f"[bold cyan]Generated random MAC: {target_mac}[/bold cyan]")
-            self.console.print(f"[bold yellow]Vendor: {vendor}[/bold yellow]")
+            try:
+                target_mac = MacAddress.generate_random(args.vendor)
+                vendor = MacAddress.get_vendor(target_mac)
+                self.console.print(f"[bold cyan]Generated random MAC: {target_mac}[/bold cyan]")
+                self.console.print(f"[bold yellow]Vendor: {vendor}[/bold yellow]")
+            except Exception as e:
+                self.console.print(f"[bold red]Error generating random MAC: {e}[/bold red]")
+                return
         elif args.mac:
             # Validate provided MAC
             if not MacAddress.is_valid(args.mac):
@@ -718,7 +759,6 @@ Examples:
                 'platform': platform.system()
             }
             
-            import json
             with open(self.backup_file, 'w') as f:
                 json.dump(backup_data, f, indent=2)
             
