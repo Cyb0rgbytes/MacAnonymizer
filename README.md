@@ -1,17 +1,11 @@
 🚀 MacAnonymizer Pro - Advanced MAC Address Manipulation Tool
-<div align="center">
 
-https://img.shields.io/badge/MacAnonymizer-Pro-brightgreen
-https://img.shields.io/badge/Python-3.8+-blue
-https://img.shields.io/badge/Platform-Linux%2520%7C%2520Windows%2520%7C%2520macOS-orange
-https://img.shields.io/badge/License-MIT-yellow
+<p align="center"> <img src="https://img.shields.io/badge/Version-2.0-brightgreen" alt="Version"> <img src="https://img.shields.io/badge/Python-3.7+-blue" alt="Python"> <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License"> <img src="https://img.shields.io/badge/Author-Cyb0rgBytes-purple" alt="Author"> </p><p align="center"> ⚡ <strong>Revolutionizing network discovery with style, speed, and precision!</strong> ⚡ </p>
+
 
 Professional-grade MAC address manipulation with stunning terminal visuals
 
-https://img.shields.io/badge/%F0%9F%8E%AC-Watch_Demo-red
-https://img.shields.io/github/issues/Cyb0rgBytes/MacAnonymizer
-https://img.shields.io/github/stars/Cyb0rgBytes/MacAnonymizer
-</div>
+
 ✨ Elevate Your Network Security & Privacy
 
 MacAnonymizer Pro transforms the simple concept of MAC address changing into a powerful, feature-rich toolkit with enterprise-grade capabilities. Perfect for penetration testers, network administrators, privacy-conscious users, and cybersecurity enthusiasts.
